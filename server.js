@@ -1,11 +1,15 @@
 /**
- * Trip Expense Splitter - Backend v2.0 (Node.js, zero dependencies)
- * -----------------------------------------------------------------
+ * Trip Expense Splitter - Backend (Node.js, zero dependencies)
+ * ------------------------------------------------------------
  * - Accounts: register / login / logout (passwords hashed with scrypt)
  * - Every user has their own private trips (nobody else can see them)
- * - Automatically serves `trip_splitter_mobile_app-v3.html` OR `./public/index.html`
- * - Supports Upstash Redis (`UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN`)
- *   with automatic fallback to `./data/db.json`
+ * - Serves the app from the ./public folder (installable as a phone app / PWA)
+ *
+ * Storage (chosen automatically):
+ *   1. If UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are set
+ *      -> data is kept in Upstash Redis (free hosted database, survives restarts)
+ *   2. Otherwise -> data is kept in a local file  ./data/db.json
+ *      (great on your laptop; NOT permanent on free hosting like Render)
  *
  * Run:  node server.js
  */
@@ -22,13 +26,12 @@ const scrypt = promisify(crypto.scrypt);
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const ROOT_HTML_FILE = path.join(__dirname, 'trip_splitter_mobile_app-v3.html');
 const SESSION_DAYS = 90;
 const SESSION_SECONDS = SESSION_DAYS * 24 * 60 * 60;
-const MAX_STATE_BYTES = 400 * 1024;
+const MAX_STATE_BYTES = 400 * 1024; // max size of one user's saved trips
 
 // ============================================================================
-// 1. Storage (file or Upstash Redis)
+// 1. Storage (file or Upstash Redis) - same simple interface for both
 // ============================================================================
 
 function createFileStore() {
@@ -43,7 +46,7 @@ function createFileStore() {
   const save = () => {
     const tmp = file + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(db));
-    fs.renameSync(tmp, file);
+    fs.renameSync(tmp, file); // atomic: never leaves a half-written file
   };
   const alive = (k) => {
     if (db.exp[k] && db.exp[k] < Date.now()) {
@@ -157,6 +160,7 @@ function sessionCookie(req, token, maxAge) {
   );
 }
 
+// Simple in-memory rate limiting (slows down password guessing)
 const hits = new Map();
 function clientIp(req) {
   const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
@@ -228,25 +232,7 @@ const MIME = {
 function serveStatic(req, res, pathname) {
   let rel;
   try { rel = decodeURIComponent(pathname); } catch (e) { return sendJson(res, 400, { error: 'Bad URL' }); }
-
-  // If requesting `/` or `/index.html`, support either `./public/index.html` OR `./trip_splitter_mobile_app-v3.html`
-  if (rel === '/' || rel === '/index.html') {
-    const publicIndex = path.join(PUBLIC_DIR, 'index.html');
-    const candidate = fs.existsSync(publicIndex)
-      ? publicIndex
-      : (fs.existsSync(ROOT_HTML_FILE) ? ROOT_HTML_FILE : null);
-    if (candidate) {
-      const st = fs.statSync(candidate);
-      res.writeHead(200, Object.assign({
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Length': st.size,
-        'Cache-Control': 'no-cache'
-      }, SECURITY_HEADERS));
-      if (req.method === 'HEAD') return res.end();
-      return fs.createReadStream(candidate).pipe(res);
-    }
-  }
-
+  if (rel === '/') rel = '/index.html';
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep)) return sendJson(res, 403, { error: 'Forbidden' });
   fs.stat(file, (err, st) => {
@@ -310,7 +296,7 @@ async function handleApi(req, res, pathname) {
     if (raw && password.length <= 200) {
       try { ok = await verifyPassword(password, JSON.parse(raw)); } catch (e) { ok = false; }
     } else {
-      await hashPassword(password.slice(0, 200));
+      await hashPassword(password.slice(0, 200)); // keep timing similar for unknown users
     }
     if (!ok) {
       recordHit('login:' + ip, 15 * 60 * 1000);
@@ -326,6 +312,7 @@ async function handleApi(req, res, pathname) {
     return sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
   }
 
+  // Everything below needs a logged-in user
   const username = await getSessionUser(req);
   if (!username) return sendJson(res, 401, { error: 'Please log in.' });
 
@@ -378,8 +365,11 @@ const server = http.createServer(async (req, res) => {
 
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log('Trip Splitter v2.0 running at http://localhost:' + PORT);
+    console.log('Trip Splitter running at http://localhost:' + PORT);
     console.log('Storage: ' + store.name);
+    if (store.name.startsWith('local file') && process.env.RENDER) {
+      console.log('WARNING: local file storage is erased on free hosting. Set the UPSTASH_REDIS_REST_* variables.');
+    }
   });
 }
 

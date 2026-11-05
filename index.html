@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Trip Splitter</title>
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Trip Splitter" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --primary-light: #e0e7ff;
+      --emerald: #059669;
+      --emerald-bg: #ecfdf5;
+      --emerald-border: #a7f3d0;
+      --rose: #e11d48;
+      --rose-bg: #fff1f2;
+      --rose-border: #fecdd3;
+      --amber: #d97706;
+      --amber-bg: #fffbeb;
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    input, select, textarea { user-select: text; -webkit-user-select: text; font-family: inherit; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 60px;
+    }
+    .app-shell {
+      max-width: 460px;
+      margin: 0 auto;
+      background: var(--slate-50);
+      min-height: 100vh;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: linear-gradient(135deg, #4f46e5, #312e81);
+      color: #fff;
+      padding: 18px 16px 20px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    .header-title { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; }
+    .header-sub { font-size: 0.72rem; color: #c7d2fe; margin-top: 2px; }
+    .btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn-small {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.28);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 7px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn-small.highlight {
+      background: #10b981;
+      border-color: #059669;
+      color: #fff;
+    }
+    .btn-small:active { transform: scale(0.96); }
+
+    /* Trip Switcher Bar inside Header */
+    .trip-bar {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 14px;
+      padding: 9px 11px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .trip-select {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.45);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      outline: none;
+    }
+    .trip-select option {
+      background: #1e293b;
+      color: #fff;
+    }
+    .trip-action-btn {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: none;
+      padding: 7px 9px;
+      border-radius: 9px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .summary-grid {
+      background: rgba(30, 27, 75, 0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      text-align: center;
+    }
+    .summary-item { border-right: 1px solid rgba(255,255,255,0.15); padding-right: 6px; }
+    .summary-item:last-child { border-right: none; padding-right: 0; }
+    .summary-label { font-size: 0.64rem; text-transform: uppercase; color: #c7d2fe; font-weight: 600; }
+    .summary-val { font-size: 1.1rem; font-weight: 800; margin-top: 3px; }
+
+    main { padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 15px;
+      border: 1px solid var(--slate-200);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    }
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--slate-700);
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .group-size-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .preset-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .preset-btn {
+      flex: 1;
+      min-width: 42px;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      color: var(--slate-800);
+      font-weight: 700;
+      font-size: 0.78rem;
+      padding: 8px 6px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+    }
+    .preset-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .input-row { display: flex; gap: 8px; }
+    .text-input {
+      flex: 1;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.86rem;
+      outline: none;
+    }
+    .text-input:focus { border-color: var(--primary); background: #fff; }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+      font-size: 0.84rem;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .member-card {
+      background: #fff;
+      border: 1px solid var(--slate-200);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .member-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 800;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .member-info { min-width: 0; flex: 1; }
+    .member-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .member-name {
+      font-weight: 800;
+      font-size: 0.94rem;
+      color: var(--slate-800);
+      cursor: pointer;
+      border-bottom: 1px dashed var(--slate-400);
+    }
+    .badge {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .badge-pos { background: var(--emerald-bg); color: var(--emerald); border-color: var(--emerald-border); }
+    .badge-neg { background: var(--rose-bg); color: var(--rose); border-color: var(--rose-border); }
+    .badge-zero { background: var(--slate-100); color: var(--slate-500); border-color: var(--slate-200); }
+    .member-spent { font-size: 0.78rem; color: var(--slate-500); margin-top: 3px; }
+    .member-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .btn-add-spent {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 8px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .btn-del {
+      background: var(--slate-100);
+      color: var(--slate-500);
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .transfer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+    }
+    .btn-whatsapp {
+      width: 100%;
+      background: var(--emerald);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--slate-100);
+      font-size: 0.84rem;
+    }
+    .log-item:last-child { border-bottom: none; }
+
+    /* Saved Trips Archive Card */
+    .saved-trip-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--slate-200);
+      background: var(--slate-50);
+      margin-bottom: 8px;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .saved-trip-item.active-trip {
+      border-color: var(--primary);
+      background: #eef2ff;
+    }
+    .saved-trip-meta { font-size: 0.74rem; color: var(--slate-500); margin-top: 2px; }
+
+    /* Login screen */
+    .auth-backdrop {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #4f46e5, #312e81);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 200;
+    }
+    .auth-backdrop.show { display: flex; }
+    .auth-box {
+      background: #fff;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 22px;
+      padding: 24px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    .auth-logo { font-size: 2.2rem; text-align: center; }
+    .auth-title { text-align: center; font-size: 1.25rem; font-weight: 800; margin-top: 4px; }
+    .auth-sub { text-align: center; font-size: 0.78rem; color: var(--slate-500); margin: 4px 0 16px; }
+    .auth-label { display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 4px; }
+    .auth-error { color: var(--rose); background: var(--rose-bg); border: 1px solid var(--rose-border); font-size: 0.8rem; font-weight: 600; padding: 8px 10px; border-radius: 10px; margin-bottom: 12px; display: none; }
+    .auth-switch { text-align: center; font-size: 0.8rem; color: var(--slate-500); margin-top: 14px; }
+    .auth-switch a { color: var(--primary); font-weight: 800; cursor: pointer; }
+    .sync-status { font-size: 0.68rem; color: #c7d2fe; margin-top: 2px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal-box {
+      background: #fff;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div class="header-top">
+        <div>
+          <div class="header-title">Trip Expense Splitter</div>
+          <div class="header-sub">Auto-Saves Every Trip • Never Loses Old Data</div>
+          <div id="syncStatus" class="sync-status"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-small highlight" onclick="openNewTripModal()">+ New Trip / Day</button>
+          <button class="btn-small" onclick="logout()">Log out</button>
+        </div>
+      </div>
+
+      <!-- Active Trip Selector & Rename -->
+      <div class="trip-bar">
+        <select id="tripSelector" class="trip-select" onchange="switchTrip(this.value)"></select>
+        <button class="trip-action-btn" onclick="renameCurrentTrip()" title="Rename current trip">Rename ✎</button>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-label">Total People</div>
+          <div id="peopleCountDisplay" class="summary-val">4</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Total Spent</div>
+          <div id="totalSpentDisplay" class="summary-val">₹0</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Per Person</div>
+          <div id="perPersonDisplay" class="summary-val">₹0</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Saved Trips / History Switcher Section -->
+      <section class="card">
+        <div class="section-title">
+          <span>Saved Trips & Days (<span id="savedTripsCount">1</span>)</span>
+          <button onclick="openNewTripModal()" style="background:var(--primary-light);color:var(--primary-dark);border:none;padding:5px 10px;border-radius:8px;font-size:0.72rem;font-weight:800;cursor:pointer;">
+            + Create New (Keep Current Saved)
+          </button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--slate-500);margin-bottom:10px;">
+          Tap any saved record below to view or edit it. Creating a new trip automatically saves your current one!
+        </p>
+        <div id="savedTripsList"></div>
+      </section>
+
+      <!-- Group Size & Add Any Number of People -->
+      <section class="card">
+        <div class="section-title">
+          <span>1. People in This Trip</span>
+          <span style="font-size:0.7rem;color:var(--primary);font-weight:700;">Tap name to rename</span>
+        </div>
+        <div class="group-size-controls">
+          <div class="preset-row">
+            <span style="font-size:0.75rem;color:var(--slate-500);font-weight:700;margin-right:4px;">Quick Set:</span>
+            <button class="preset-btn" onclick="setGroupCount(2)">2</button>
+            <button class="preset-btn" onclick="setGroupCount(4)">4</button>
+            <button class="preset-btn" onclick="setGroupCount(6)">6</button>
+            <button class="preset-btn" onclick="setGroupCount(8)">8</button>
+            <button class="preset-btn" onclick="setGroupCount(10)">10</button>
+            <button class="preset-btn" onclick="promptCustomCount()">Custom #</button>
+          </div>
+          <div class="input-row">
+            <input id="newMemberInput" class="text-input" type="text" placeholder="Type name (e.g., E, F, Rahul, Sourav)..." />
+            <button class="btn-primary" onclick="addMember()">+ Add Person</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Travelers List -->
+      <section>
+        <div class="section-title" style="padding: 0 4px;">
+          <span>2. Travelers & Individual Spending</span>
+          <span id="memberCountLabel" style="font-size:0.75rem;color:var(--slate-500);">4 Members</span>
+        </div>
+        <div id="membersContainer"></div>
+      </section>
+
+      <!-- Settlement Plan -->
+      <section class="card">
+        <div class="section-title">
+          <span>3. Settlement (Who Pays Whom)</span>
+        </div>
+        <div id="settlementsContainer"></div>
+        <button class="btn-whatsapp" onclick="copySummary()">Copy WhatsApp Summary for This Trip</button>
+        <p id="copyToast" style="text-align:center;font-size:0.75rem;color:var(--emerald);font-weight:700;margin-top:8px;display:none;">
+          Copied to clipboard!
+        </p>
+      </section>
+
+      <!-- Expense History -->
+      <section class="card">
+        <div class="section-title">
+          <span>Expense Log (This Trip)</span>
+        </div>
+        <div id="historyContainer"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Login / Create account -->
+  <div id="authScreen" class="auth-backdrop">
+    <form class="auth-box" onsubmit="submitAuth(event)" autocomplete="on">
+      <div class="auth-logo">🧳</div>
+      <div class="auth-title">Trip Splitter</div>
+      <div id="authSub" class="auth-sub">Log in to see your private trips</div>
+      <div id="authError" class="auth-error"></div>
+      <div style="margin-bottom:12px;">
+        <label class="auth-label" for="authUser">Username</label>
+        <input id="authUser" class="text-input" style="width:100%;" type="text" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. koustav" required />
+      </div>
+      <div style="margin-bottom:16px;">
+        <label class="auth-label" for="authPass">Password</label>
+        <input id="authPass" class="text-input" style="width:100%;" type="password" name="password" autocomplete="current-password" placeholder="At least 6 characters" required />
+      </div>
+      <button id="authBtn" type="submit" class="btn-primary" style="width:100%;padding:12px;">Log in</button>
+      <div id="authSwitch" class="auth-switch"></div>
+    </form>
+  </div>
+
+  <!-- Add Expense Modal -->
+  <div id="expenseModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 id="modalTitle" style="font-size:1.05rem;font-weight:800;">Add Spent</h3>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--slate-500);">&times;</button>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:0.72rem;font-weight:700;color:var(--slate-500);text-transform:uppercase;margin-bottom:4px;">Amount Spent (₹)</label>
+        <input id="expenseAmountInput" class="text-input" style="width:100%;font-size:1.1rem;font-weight:800;" type="number" inputmode="decimal" placeholder="e.g. 500" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:0.72rem;font-weight:700;color:var(--slate-500);text-transform:uppercase;margin-bottom:4px;">What was it for? (Optional)</label>
+        <input id="expenseNoteInput" class="text-input" style="width:100%;" type="text" placeholder="e.g. Hotel, Dinner, Train, Cab" />
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeModal()" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--slate-200);background:var(--slate-100);font-weight:700;cursor:pointer;">Cancel</button>
+        <button onclick="confirmAddExpense()" class="btn-primary" style="flex:1;">Save Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create New Trip Modal (Without Erasing Old Trips) -->
+  <div id="newTripModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="font-size:1.05rem;font-weight:800;">Start New Trip / Split</h3>
+        <button onclick="closeNewTripModal()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--slate-500);">&times;</button>
+      </div>
+      <p style="font-size:0.78rem;color:var(--emerald);background:var(--emerald-bg);border:1px solid var(--emerald-border);padding:8px 10px;border-radius:10px;margin-bottom:12px;font-weight:600;">
+        ✓ Your current trip & split is safely saved in history and will NOT be erased!
+      </p>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:0.72rem;font-weight:700;color:var(--slate-500);text-transform:uppercase;margin-bottom:4px;">New Trip or Day Name</label>
+        <input id="newTripNameInput" class="text-input" style="width:100%;font-weight:700;" type="text" placeholder="e.g. Darjeeling Day 2, Goa Trip, Sunday Dinner" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:0.72rem;font-weight:700;color:var(--slate-500);text-transform:uppercase;margin-bottom:6px;">Who is in this new trip?</label>
+        <select id="newTripMemberOption" class="text-input" style="width:100%;font-weight:600;">
+          <option value="keep">Keep same people names (Start with ₹0 spent)</option>
+          <option value="4">Fresh 4 People (A, B, C, D)</option>
+          <option value="6">Fresh 6 People (A, B, C, D, E, F)</option>
+          <option value="2">Fresh 2 People (A, B)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeNewTripModal()" style="flex:1;padding:10px;border-radius:12px;border:1px solid var(--slate-200);background:var(--slate-100);font-weight:700;cursor:pointer;">Cancel</button>
+        <button onclick="confirmCreateNewTrip()" class="btn-primary" style="flex:1;background:var(--emerald);">Create & Save Old</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Old key used when the app ran as a plain HTML file (migrated once into your first account)
+    const LEGACY_KEY = 'trip_splitter_multi_trips_v3';
+    const LAST_USER_KEY = 'trip_splitter_last_user';
+
+    function esc(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function formatTodayDate() {
+      const d = new Date();
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function makeDefaultData() { return {
+      activeTripId: 'trip_1',
+      trips: [
+        {
+          id: 'trip_1',
+          title: 'Trip #1 (Sample)',
+          createdAt: formatTodayDate(),
+          members: [
+            { id: '1', name: 'A' },
+            { id: '2', name: 'B' },
+            { id: '3', name: 'C' },
+            { id: '4', name: 'D' }
+          ],
+          expenses: [
+            { id: 'e1', memberId: '1', amount: 3200, note: 'Hotel Booking' },
+            { id: 'e2', memberId: '2', amount: 1400, note: 'Cab & Fuel' },
+            { id: 'e3', memberId: '3', amount: 1800, note: 'Dinner & Lunch' },
+            { id: 'e4', memberId: '4', amount: 400, note: 'Snacks & Tea' }
+          ]
+        }
+      ]
+    }; }
+
+    let appData = makeDefaultData();
+    let activeMemberId = null;
+
+    function getCurrentTrip() {
+      let found = appData.trips.find(t => t.id === appData.activeTripId);
+      if (!found && appData.trips.length > 0) {
+        appData.activeTripId = appData.trips[0].id;
+        found = appData.trips[0];
+      }
+      return found;
+    }
+
+    function indexToLabel(idx) {
+      let label = '';
+      let n = idx;
+      while (n >= 0) {
+        label = String.fromCharCode((n % 26) + 65) + label;
+        n = Math.floor(n / 26) - 1;
+      }
+      return label;
+    }
+
+    // ------------------------------------------------------------------
+    // Accounts + syncing with the server
+    // ------------------------------------------------------------------
+    let currentUser = null;
+    let authMode = 'login';
+    let syncTimer = null;
+    let syncing = false;
+
+    const cacheKey = () => 'trip_splitter_cache_' + currentUser;
+    const dirtyKey = () => 'trip_splitter_dirty_' + currentUser;
+
+    async function api(method, url, body) {
+      const opts = { method, credentials: 'same-origin', headers: {} };
+      if (body !== undefined) {
+        opts.headers['Content-Type'] = 'application/json';
+        opts.body = JSON.stringify(body);
+      }
+      const r = await fetch(url, opts);
+      let data = null;
+      try { data = await r.json(); } catch (e) {}
+      return { ok: r.ok, status: r.status, data };
+    }
+
+    function setSyncStatus(text) {
+      const el = document.getElementById('syncStatus');
+      if (el) el.textContent = (currentUser ? '👤 ' + currentUser : '') + (text ? ' • ' + text : '');
+    }
+
+    function validData(d) {
+      return d && Array.isArray(d.trips) && d.trips.length > 0;
+    }
+
+    function saveState() {
+      if (!currentUser) return;
+      try {
+        localStorage.setItem(cacheKey(), JSON.stringify(appData));
+        localStorage.setItem(dirtyKey(), '1');
+      } catch (e) {}
+      setSyncStatus('Saving…');
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(pushState, 500);
+    }
+
+    async function pushState() {
+      if (!currentUser || syncing) { if (syncing) { clearTimeout(syncTimer); syncTimer = setTimeout(pushState, 700); } return; }
+      syncing = true;
+      try {
+        const res = await api('PUT', '/api/state', appData);
+        if (res.ok) {
+          // only clear the flag if nothing changed while we were saving
+          if (!syncTimer) { try { localStorage.removeItem(dirtyKey()); } catch (e) {} }
+          setSyncStatus('Saved ✓');
+        } else if (res.status === 401) {
+          showAuth('Your session ended. Please log in again.');
+        } else {
+          setSyncStatus('Could not save – will retry');
+        }
+      } catch (e) {
+        setSyncStatus('Offline – will sync later');
+      }
+      syncing = false;
+    }
+
+    window.addEventListener('online', () => {
+      if (currentUser && localStorage.getItem(dirtyKey())) pushState();
+    });
+
+    async function startApp(username) {
+      currentUser = username;
+      try { localStorage.setItem(LAST_USER_KEY, username); } catch (e) {}
+      document.getElementById('authScreen').classList.remove('show');
+
+      let loaded = null;
+      let hasUnsynced = false;
+      try { hasUnsynced = !!localStorage.getItem(dirtyKey()); } catch (e) {}
+      let cached = null;
+      try { cached = JSON.parse(localStorage.getItem(cacheKey()) || 'null'); } catch (e) {}
+
+      let serverOk = false;
+      try {
+        const res = await api('GET', '/api/state');
+        if (res.status === 401) { showAuth('Please log in.'); return; }
+        if (res.ok) {
+          serverOk = true;
+          if (hasUnsynced && validData(cached)) loaded = cached;       // newer changes made offline
+          else if (res.data && validData(res.data.state)) loaded = res.data.state;
+        }
+      } catch (e) {}
+
+      if (!loaded && !serverOk && validData(cached)) loaded = cached;  // offline: use saved copy
+
+      let needPush = hasUnsynced && validData(cached);
+      if (!loaded) {
+        // brand-new account: carry over trips from the old single-file version (once), else start fresh
+        let legacy = null;
+        try { legacy = JSON.parse(localStorage.getItem(LEGACY_KEY) || 'null'); } catch (e) {}
+        if (validData(legacy)) {
+          loaded = legacy;
+          try { localStorage.removeItem(LEGACY_KEY); } catch (e) {}
+        } else {
+          loaded = makeDefaultData();
+        }
+        needPush = true;
+      }
+
+      appData = loaded;
+      try { localStorage.setItem(cacheKey(), JSON.stringify(appData)); } catch (e) {}
+      render();
+      setSyncStatus(serverOk ? 'Saved ✓' : 'Offline');
+      if (needPush && serverOk) { try { localStorage.setItem(dirtyKey(), '1'); } catch (e) {} pushState(); }
+    }
+
+    function showAuth(message) {
+      currentUser = null;
+      appData = makeDefaultData();
+      document.getElementById('authScreen').classList.add('show');
+      setAuthMode(authMode);
+      if (message) showAuthError(message); else showAuthError('');
+    }
+
+    function showAuthError(msg) {
+      const el = document.getElementById('authError');
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    function setAuthMode(mode) {
+      authMode = mode;
+      const login = mode === 'login';
+      document.getElementById('authSub').textContent = login
+        ? 'Log in to see your private trips'
+        : 'Create a free account – your trips stay private to you';
+      document.getElementById('authBtn').textContent = login ? 'Log in' : 'Create account';
+      document.getElementById('authPass').setAttribute('autocomplete', login ? 'current-password' : 'new-password');
+      document.getElementById('authSwitch').innerHTML = login
+        ? 'New here? <a onclick="setAuthMode(\'register\')">Create an account</a>'
+        : 'Already have an account? <a onclick="setAuthMode(\'login\')">Log in</a>';
+    }
+
+    async function submitAuth(ev) {
+      ev.preventDefault();
+      const username = document.getElementById('authUser').value.trim();
+      const password = document.getElementById('authPass').value;
+      const btn = document.getElementById('authBtn');
+      btn.disabled = true;
+      showAuthError('');
+      try {
+        const res = await api('POST', authMode === 'login' ? '/api/login' : '/api/register', { username, password });
+        if (res.ok) {
+          document.getElementById('authPass').value = '';
+          await startApp(res.data.username);
+        } else {
+          showAuthError((res.data && res.data.error) || 'Something went wrong. Try again.');
+        }
+      } catch (e) {
+        showAuthError('Cannot reach the server. Check your internet connection.');
+      }
+      btn.disabled = false;
+    }
+
+    async function logout() {
+      let unsynced = false;
+      try { unsynced = !!localStorage.getItem(dirtyKey()); } catch (e) {}
+      if (unsynced) {
+        await pushState();
+        try { unsynced = !!localStorage.getItem(dirtyKey()); } catch (e) {}
+        if (unsynced && !confirm('Some changes are not saved to the server yet and will be lost if you log out. Log out anyway?')) return;
+      }
+      clearTimeout(syncTimer);
+      syncTimer = null;
+      try { await api('POST', '/api/logout', {}); } catch (e) {}
+      try {
+        localStorage.removeItem(cacheKey());
+        localStorage.removeItem(dirtyKey());
+        localStorage.removeItem(LAST_USER_KEY);
+      } catch (e) {}
+      document.getElementById('authUser').value = '';
+      showAuth('');
+    }
+
+    async function boot() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+      try {
+        const res = await api('GET', '/api/me');
+        if (res.ok) { await startApp(res.data.username); return; }
+        showAuth('');
+      } catch (e) {
+        // no internet: reopen the last user's saved copy
+        let last = null;
+        try { last = localStorage.getItem(LAST_USER_KEY); } catch (err) {}
+        if (last) await startApp(last); else showAuth('You are offline. Connect to the internet to log in.');
+      }
+    }
+
+    function formatINR(val) {
+      return '₹' + Number(val || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    }
+
+    function getMemberSpent(trip, memberId) {
+      return trip.expenses
+        .filter(e => e.memberId === memberId)
+        .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+    }
+
+    function calculateSettlements(trip) {
+      const count = trip.members.length;
+      if (count === 0) return { total: 0, share: 0, balances: [], transfers: [] };
+
+      const total = trip.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+      const share = total / count;
+
+      const balances = trip.members.map(m => {
+        const spent = getMemberSpent(trip, m.id);
+        const net = +(spent - share).toFixed(2);
+        return { ...m, spent, net };
+      });
+
+      const debtors = balances.filter(b => b.net < -0.01).map(b => ({ ...b, amount: Math.abs(b.net) })).sort((a, b) => b.amount - a.amount);
+      const creditors = balances.filter(b => b.net > 0.01).map(b => ({ ...b, amount: b.net })).sort((a, b) => b.amount - a.amount);
+
+      const transfers = [];
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const pay = Math.min(debtors[i].amount, creditors[j].amount);
+        if (pay > 0.01) {
+          transfers.push({
+            from: debtors[i].name,
+            to: creditors[j].name,
+            amount: +pay.toFixed(2)
+          });
+        }
+        debtors[i].amount -= pay;
+        creditors[j].amount -= pay;
+        if (debtors[i].amount < 0.01) i++;
+        if (creditors[j].amount < 0.01) j++;
+      }
+
+      return { total, share, balances, transfers };
+    }
+
+    function switchTrip(tripId) {
+      appData.activeTripId = tripId;
+      saveState();
+      render();
+    }
+
+    function renameCurrentTrip() {
+      const trip = getCurrentTrip();
+      const newTitle = prompt('Enter a name for this Trip / Split:', trip.title);
+      if (newTitle && newTitle.trim()) {
+        trip.title = newTitle.trim();
+        saveState();
+        render();
+      }
+    }
+
+    function openNewTripModal() {
+      const nextNum = appData.trips.length + 1;
+      document.getElementById('newTripNameInput').value = 'Trip #' + nextNum + ' (' + formatTodayDate() + ')';
+      document.getElementById('newTripModal').classList.add('show');
+      setTimeout(() => document.getElementById('newTripNameInput').select(), 50);
+    }
+
+    function closeNewTripModal() {
+      document.getElementById('newTripModal').classList.remove('show');
+    }
+
+    function confirmCreateNewTrip() {
+      const currentTrip = getCurrentTrip();
+      const rawName = document.getElementById('newTripNameInput').value.trim();
+      const title = rawName || ('Trip #' + (appData.trips.length + 1));
+      const option = document.getElementById('newTripMemberOption').value;
+
+      let newMembers = [];
+      if (option === 'keep' && currentTrip && currentTrip.members.length > 0) {
+        newMembers = currentTrip.members.map((m, idx) => ({
+          id: 'm_' + Date.now() + '_' + idx,
+          name: m.name
+        }));
+      } else {
+        const count = parseInt(option, 10) || 4;
+        for (let i = 0; i < count; i++) {
+          newMembers.push({
+            id: 'm_' + Date.now() + '_' + i,
+            name: indexToLabel(i)
+          });
+        }
+      }
+
+      const newTrip = {
+        id: 'trip_' + Date.now(),
+        title: title,
+        createdAt: formatTodayDate(),
+        members: newMembers,
+        expenses: []
+      };
+
+      appData.trips.unshift(newTrip);
+      appData.activeTripId = newTrip.id;
+      saveState();
+      closeNewTripModal();
+      render();
+    }
+
+    function deleteSavedTrip(tripId, event) {
+      event.stopPropagation();
+      if (appData.trips.length <= 1) {
+        alert('You must keep at least 1 trip in the app.');
+        return;
+      }
+      const target = appData.trips.find(t => t.id === tripId);
+      if (!confirm('Delete saved trip "' + (target ? target.title : '') + '"?')) return;
+      appData.trips = appData.trips.filter(t => t.id !== tripId);
+      if (appData.activeTripId === tripId) {
+        appData.activeTripId = appData.trips[0].id;
+      }
+      saveState();
+      render();
+    }
+
+    function setGroupCount(targetCount) {
+      const trip = getCurrentTrip();
+      const count = parseInt(targetCount, 10);
+      if (isNaN(count) || count < 1 || count > 100) return;
+      const currentLen = trip.members.length;
+      if (count > currentLen) {
+        for (let i = currentLen; i < count; i++) {
+          trip.members.push({
+            id: 'm_' + Date.now() + '_' + i,
+            name: indexToLabel(i)
+          });
+        }
+      } else if (count < currentLen) {
+        const kept = trip.members.slice(0, count);
+        const keptIds = new Set(kept.map(m => m.id));
+        trip.members = kept;
+        trip.expenses = trip.expenses.filter(e => keptIds.has(e.memberId));
+      }
+      saveState();
+      render();
+    }
+
+    function promptCustomCount() {
+      const trip = getCurrentTrip();
+      const val = prompt('How many people are in this trip? (1 to 100):', trip.members.length);
+      if (val !== null) {
+        const num = parseInt(val, 10);
+        if (!isNaN(num) && num >= 1 && num <= 100) {
+          setGroupCount(num);
+        }
+      }
+    }
+
+    function renameMember(memberId) {
+      const trip = getCurrentTrip();
+      const member = trip.members.find(m => m.id === memberId);
+      if (!member) return;
+      const newName = prompt('Enter new name for ' + member.name + ':', member.name);
+      if (newName && newName.trim()) {
+        member.name = newName.trim();
+        saveState();
+        render();
+      }
+    }
+
+    function render() {
+      const trip = getCurrentTrip();
+      const { total, share, balances, transfers } = calculateSettlements(trip);
+
+      // Populate top dropdown
+      const selector = document.getElementById('tripSelector');
+      selector.innerHTML = appData.trips.map(t => {
+        const tTotal = t.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+        return `<option value="${esc(t.id)}" ${t.id === trip.id ? 'selected' : ''}>📂 ${esc(t.title)} (${formatINR(tTotal)})</option>`;
+      }).join('');
+
+      // Populate Saved Trips Archive List
+      document.getElementById('savedTripsCount').textContent = appData.trips.length;
+      const savedListEl = document.getElementById('savedTripsList');
+      savedListEl.innerHTML = appData.trips.map(t => {
+        const tTotal = t.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+        const isCurrent = t.id === trip.id;
+        return `
+          <div class="saved-trip-item ${isCurrent ? 'active-trip' : ''}" onclick="switchTrip('${esc(t.id)}')">
+            <div>
+              <div style="font-weight:800;font-size:0.88rem;color:var(--slate-800);">
+                ${isCurrent ? '🟢 ' : '📁 '}${esc(t.title)}
+              </div>
+              <div class="saved-trip-meta">
+                ${t.members.length} People • Total: <strong>${formatINR(tTotal)}</strong> • ${esc(t.createdAt || '')}
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              ${isCurrent ? '<span style="font-size:0.7rem;font-weight:800;color:var(--primary);background:#e0e7ff;padding:3px 8px;border-radius:99px;">Active</span>' : ''}
+              ${appData.trips.length > 1 ? `<button class="btn-del" onclick="deleteSavedTrip('${t.id}', event)" title="Delete this saved trip">&times;</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('peopleCountDisplay').textContent = trip.members.length;
+      document.getElementById('totalSpentDisplay').textContent = formatINR(total);
+      document.getElementById('perPersonDisplay').textContent = formatINR(share);
+      document.getElementById('memberCountLabel').textContent = trip.members.length + ' People';
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        if (parseInt(btn.textContent, 10) === trip.members.length) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const membersContainer = document.getElementById('membersContainer');
+      membersContainer.innerHTML = balances.map(b => {
+        const isPos = b.net > 0.01;
+        const isNeg = b.net < -0.01;
+        const badgeClass = isPos ? 'badge-pos' : isNeg ? 'badge-neg' : 'badge-zero';
+        const statusText = isPos
+          ? 'Gets back ' + formatINR(b.net)
+          : isNeg
+          ? 'Will give ' + formatINR(Math.abs(b.net))
+          : 'Settled (₹0)';
+
+        return `
+          <div class="member-card">
+            <div class="member-left">
+              <div class="avatar">${esc(b.name.charAt(0).toUpperCase())}</div>
+              <div class="member-info">
+                <div class="member-name-row">
+                  <span class="member-name" onclick="renameMember('${b.id}')" title="Tap to rename">${esc(b.name)} ✎</span>
+                  <span class="badge ${badgeClass}">${statusText}</span>
+                </div>
+                <div class="member-spent">Total Spent: <strong style="color:var(--slate-800);">${formatINR(b.spent)}</strong></div>
+              </div>
+            </div>
+            <div class="member-actions">
+              <button class="btn-add-spent" onclick="openExpenseModal('${b.id}')">+ Add Spent</button>
+              ${trip.members.length > 1 ? `<button class="btn-del" onclick="removeMember('${b.id}')" title="Remove person">&times;</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const settlementsContainer = document.getElementById('settlementsContainer');
+      if (transfers.length === 0) {
+        settlementsContainer.innerHTML = `<div style="text-align:center;padding:12px;font-size:0.8rem;color:var(--slate-400);">All expenses in "${esc(trip.title)}" are settled or ₹0 spent!</div>`;
+      } else {
+        settlementsContainer.innerHTML = transfers.map(t => `
+          <div class="transfer-item">
+            <div>
+              <strong style="color:var(--rose);">${esc(t.from)}</strong>
+              <span style="color:var(--slate-400);font-size:0.78rem;margin:0 6px;">pays &rarr;</span>
+              <strong style="color:var(--emerald);">${esc(t.to)}</strong>
+            </div>
+            <strong style="font-size:0.95rem;">${formatINR(t.amount)}</strong>
+          </div>
+        `).join('');
+      }
+
+      const historyContainer = document.getElementById('historyContainer');
+      if (trip.expenses.length === 0) {
+        historyContainer.innerHTML = `<div style="text-align:center;padding:10px;font-size:0.8rem;color:var(--slate-400);">No expenses in "${esc(trip.title)}" yet. Tap "+ Add Spent" above.</div>`;
+      } else {
+        historyContainer.innerHTML = trip.expenses.slice().reverse().map(e => {
+          const member = trip.members.find(m => m.id === e.memberId);
+          return `
+            <div class="log-item">
+              <div>
+                <strong>${member ? esc(member.name) : 'Unknown'}</strong>
+                <span style="color:var(--slate-500);font-size:0.78rem;margin-left:6px;">${esc(e.note || 'Expense')}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <strong>${formatINR(e.amount)}</strong>
+                <button onclick="deleteExpense('${e.id}')" style="background:none;border:none;color:var(--rose);font-weight:800;cursor:pointer;">&times;</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function openExpenseModal(memberId) {
+      const trip = getCurrentTrip();
+      activeMemberId = memberId;
+      const member = trip.members.find(m => m.id === memberId);
+      document.getElementById('modalTitle').textContent = 'Add Spent for ' + (member ? member.name : '');
+      document.getElementById('expenseAmountInput').value = '';
+      document.getElementById('expenseNoteInput').value = '';
+      document.getElementById('expenseModal').classList.add('show');
+      setTimeout(() => document.getElementById('expenseAmountInput').focus(), 50);
+    }
+
+    function closeModal() {
+      document.getElementById('expenseModal').classList.remove('show');
+      activeMemberId = null;
+    }
+
+    function confirmAddExpense() {
+      const trip = getCurrentTrip();
+      const amount = parseFloat(document.getElementById('expenseAmountInput').value);
+      const note = document.getElementById('expenseNoteInput').value.trim() || 'Trip Expense';
+      if (!amount || amount <= 0 || !activeMemberId) return;
+      trip.expenses.push({
+        id: 'e' + Date.now(),
+        memberId: activeMemberId,
+        amount: +amount.toFixed(2),
+        note
+      });
+      saveState();
+      closeModal();
+      render();
+    }
+
+    function deleteExpense(id) {
+      const trip = getCurrentTrip();
+      trip.expenses = trip.expenses.filter(e => e.id !== id);
+      saveState();
+      render();
+    }
+
+    function addMember() {
+      const trip = getCurrentTrip();
+      const input = document.getElementById('newMemberInput');
+      const customName = input.value.trim();
+      const autoName = customName || indexToLabel(trip.members.length);
+      trip.members.push({ id: 'm' + Date.now(), name: autoName });
+      input.value = '';
+      saveState();
+      render();
+    }
+
+    function removeMember(id) {
+      const trip = getCurrentTrip();
+      trip.members = trip.members.filter(m => m.id !== id);
+      trip.expenses = trip.expenses.filter(e => e.memberId !== id);
+      saveState();
+      render();
+    }
+
+    function copySummary() {
+      const trip = getCurrentTrip();
+      const { total, share, balances, transfers } = calculateSettlements(trip);
+      let lines = [
+        '*' + trip.title + ' - Expense Summary (' + trip.members.length + ' People)*',
+        'Total Spent: ' + formatINR(total),
+        'Per Person Share: ' + formatINR(share),
+        '',
+        '*Individual Spending:*'
+      ];
+      balances.forEach(b => {
+        const diff = b.net >= 0 ? '(Gets ' + formatINR(b.net) + ')' : '(Gives ' + formatINR(Math.abs(b.net)) + ')';
+        lines.push('• ' + b.name + ': ' + formatINR(b.spent) + ' ' + diff);
+      });
+      lines.push('', '*Final Settlement:*');
+      if (transfers.length === 0) {
+        lines.push('All settled!');
+      } else {
+        transfers.forEach(t => lines.push('👉 *' + t.from + '* pays *' + t.to + '*: *' + formatINR(t.amount) + '*'));
+      }
+      navigator.clipboard.writeText(lines.join('\n'));
+      const toast = document.getElementById('copyToast');
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+
+    boot();
+  </script>
+</body>
+</html>
