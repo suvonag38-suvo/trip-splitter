@@ -1,0 +1,54 @@
+{
+  "activeTripId": "trip_1",
+  "trips": [
+    {
+      "id": "trip_1",
+      "title": "Trip #1 (Sample)",
+      "createdAt": "05 Nov 2026",
+      "members": [
+        {
+          "id": "1",
+          "name": "A"
+        },
+        {
+          "id": "2",
+          "name": "B"
+        },
+        {
+          "id": "3",
+          "name": "C"
+        },
+        {
+          "id": "4",
+          "name": "D"
+        }
+      ],
+      "expenses": [
+        {
+          "id": "e1",
+          "memberId": "1",
+          "amount": 3200,
+          "note": "Hotel Booking"
+        },
+        {
+          "id": "e2",
+          "memberId": "2",
+          "amount": 1400,
+          "note": "Cab & Fuel"
+        },
+        {
+          "id": "e3",
+          "memberId": "3",
+          "amount": 1800,
+          "note": "Dinner & Lunch"
+        },
+        {
+          "id": "e4",
+          "memberId": "4",
+          "amount": 400,
+          "note": "Snacks & Tea"
+        }
+      ]
+    }
+  ]
+}
